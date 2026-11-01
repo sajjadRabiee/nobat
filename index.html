@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>نوبت | نوبت‌بندی سالانه</title>
+  <meta name="description" content="فهرست نام‌ها را بدهید و نوبت‌بندی منصفانهٔ یک سال کامل شمسی را با تعطیلات رسمی، به‌صورت فایل اکسل بگیرید.">
+  <meta name="theme-color" content="#0E6E78">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230E6E78'/%3E%3Crect x='7' y='9' width='18' height='16' rx='2' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M7 14h18' stroke='white' stroke-width='2'/%3E%3Ccircle cx='20' cy='20' r='2.2' fill='%23F2687A'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <h1>نوبت</h1>
+      <p class="lede">فهرست نام‌ها را بدهید و نوبت‌بندی یک سال کامل شمسی را تحویل بگیرید؛ با تعطیلات رسمی، و طوری که به همه تقریباً به یک اندازه نوبت برسد.</p>
+      <p class="privacy">همه‌چیز در همین مرورگر انجام می‌شود و فایل شما به هیچ سروری فرستاده نمی‌شود.</p>
+    </header>
+
+    <form id="planForm" class="steps" novalidate>
+      <section class="step" aria-labelledby="step1">
+        <h2 id="step1"><span class="step-no" aria-hidden="true">۱</span>نام‌ها</h2>
+
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept=".xlsx,.xls,.csv,.ods">
+          <span class="drop-title" id="dropTitle">فایل اکسل را اینجا رها کنید یا برای انتخاب کلیک کنید</span>
+          <span class="drop-hint">هر نام در یک ردیف از ستون اول. <a href="sample_names.xlsx" download>فایل نمونه</a></span>
+        </label>
+
+        <div class="field">
+          <div class="field-head">
+            <label for="names">یا نام‌ها را اینجا بنویسید، هر نام در یک خط</label>
+            <span class="count" id="nameCount" aria-live="polite"></span>
+          </div>
+          <textarea id="names" rows="6" spellcheck="false" placeholder="مریم احمدی&#10;علی کریمی&#10;سارا رضایی"></textarea>
+        </div>
+      </section>
+
+      <section class="step" aria-labelledby="step2">
+        <h2 id="step2"><span class="step-no" aria-hidden="true">۲</span>تنظیمات</h2>
+
+        <div class="row">
+          <div class="field">
+            <label for="year">سال شمسی</label>
+            <select id="year"></select>
+          </div>
+          <div class="field">
+            <label for="perDay">نفر در هر روز</label>
+            <div class="stepper">
+              <button type="button" data-step="1" aria-label="یک نفر بیشتر">+</button>
+              <input type="number" id="perDay" min="1" max="10" value="3" inputmode="numeric">
+              <button type="button" data-step="-1" aria-label="یک نفر کمتر">−</button>
+            </div>
+          </div>
+        </div>
+
+        <fieldset class="toggles">
+          <legend>به‌جز شنبه تا چهارشنبه، این روزها هم نوبت داشته باشند:</legend>
+          <label class="toggle"><input type="checkbox" id="onThursdays"><span>پنج‌شنبه‌ها</span></label>
+          <label class="toggle"><input type="checkbox" id="onFridays"><span>جمعه‌ها</span></label>
+          <label class="toggle"><input type="checkbox" id="onHolidays"><span>تعطیلات رسمی</span></label>
+        </fieldset>
+      </section>
+
+      <div class="error" id="error" role="alert" hidden></div>
+
+      <button type="submit" class="primary" id="submit">ساخت نوبت‌ها</button>
+    </form>
+
+    <section class="result" id="result" hidden aria-labelledby="resultTitle" tabindex="-1">
+      <div class="result-head">
+        <div>
+          <h2 id="resultTitle"></h2>
+          <p id="resultSummary"></p>
+        </div>
+        <button type="button" class="primary" id="download">دانلود فایل اکسل</button>
+      </div>
+
+      <div class="legend" aria-hidden="true">
+        <span><i class="swatch work"></i>نوبت‌دار</span>
+        <span><i class="swatch holiday"></i>تعطیل رسمی</span>
+        <span><i class="swatch off"></i>بدون نوبت</span>
+      </div>
+      <p class="day-detail" id="dayDetail" aria-live="polite">روی هر روز بزنید تا ببینید نوبت با کیست.</p>
+      <div class="year" id="calendar"></div>
+
+      <h3>سهم هر نفر</h3>
+      <table class="shares">
+        <thead><tr><th scope="col">نام</th><th scope="col">نوبت</th><th scope="col"><span class="visually-hidden">نمودار</span></th></tr></thead>
+        <tbody id="shares"></tbody>
+      </table>
+
+      <p class="note">تاریخ تعطیلات قمری تقریبی است و ممکن است یکی‌دو روز جابه‌جا باشد. پیش از استفاده، فایل را با تقویم رسمی تطبیق دهید.</p>
+    </section>
+
+    <footer class="foot">
+      <a href="https://github.com/sajjadRabiee/nobat">کد منبع در گیت‌هاب</a>
+    </footer>
+  </main>
+
+  <script src="assets/vendor/xlsx.full.min.js"></script>
+  <script src="assets/vendor/exceljs.min.js"></script>
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>

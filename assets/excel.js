@@ -53,7 +53,7 @@ export async function buildWorkbook(names, plan, options) {
     { header: 'تاریخ شمسی', width: 18 },
     { header: 'روز هفته', width: 12 },
     { header: 'تاریخ میلادی', width: 13 },
-    { header: 'مناسبت', width: 22 },
+    { header: 'مناسبت', width: 34 },
     ...people.map((header) => ({ header, width: 18 })),
   ];
   styleHeader(ws.getRow(1));

@@ -1,42 +1,78 @@
-// Official holidays, ported from Excel Divider 2.
-// Lunar (Islamic) holidays move every year; dates below are approximate and
-// only 1403–1405 have year-specific values. Other years use a generic fallback.
+// Iran's official public holidays.
+// Solar holidays sit on fixed Jalali dates. Religious holidays follow the lunar
+// Hijri calendar; their dates come from the browser's Umm al-Qura calendar.
+// Iran sets lunar months by moon sighting, so a date can differ by one day.
 
-const FIXED = [
+import { yearDays } from './calendar.js';
+
+const SOLAR = [
   [1, 1, 'نوروز'],
-  [1, 2, 'عید نوروز'],
-  [1, 3, 'عید نوروز'],
-  [1, 4, 'عید نوروز'],
+  [1, 2, 'نوروز'],
+  [1, 3, 'نوروز'],
+  [1, 4, 'نوروز'],
   [1, 12, 'روز جمهوری اسلامی'],
-  [1, 13, 'سیزده بدر'],
+  [1, 13, 'روز طبیعت'],
   [3, 14, 'رحلت امام خمینی'],
-  [3, 15, 'قیام 15 خرداد'],
-  [4, 17, 'شهادت علی (ع)'],
-  [6, 30, 'شهادت دکتر بهشتی'],
-  [7, 8, 'روز دفاع مقدس'],
-  [9, 27, 'شهادت فاطمه زهرا (س)'],
-  [11, 22, 'پیروزی انقلاب'],
-  [12, 29, 'ملی شدن نفت'],
+  [3, 15, 'قیام ۱۵ خرداد'],
+  [11, 22, 'پیروزی انقلاب اسلامی'],
+  [12, 29, 'ملی شدن صنعت نفت'],
 ];
 
-const ISLAMIC_NAMES = ['عید فطر', 'عید فطر', 'عید قربان', 'عید غدیر', 'تاسوعا', 'عاشورا', 'اربعین'];
+// [hijri month, hijri day, name]
+const LUNAR = [
+  [1, 9, 'تاسوعا'],
+  [1, 10, 'عاشورا'],
+  [2, 20, 'اربعین'],
+  [2, 28, 'رحلت پیامبر و شهادت امام حسن (ع)'],
+  [3, 8, 'شهادت امام حسن عسکری (ع)'],
+  [3, 17, 'میلاد پیامبر و امام جعفر صادق (ع)'],
+  [6, 3, 'شهادت حضرت فاطمه (س)'],
+  [7, 13, 'ولادت امام علی (ع)'],
+  [7, 27, 'مبعث'],
+  [8, 15, 'نیمه شعبان'],
+  [9, 21, 'شهادت امام علی (ع)'],
+  [10, 1, 'عید فطر'],
+  [10, 2, 'عید فطر'],
+  [10, 25, 'شهادت امام جعفر صادق (ع)'],
+  [12, 10, 'عید قربان'],
+  [12, 18, 'عید غدیر'],
+];
+const IMAM_REZA = 'شهادت امام رضا (ع)'; // last day of Safar (29th or 30th)
 
-const ISLAMIC_DATES = {
-  1403: [[4, 28], [4, 29], [7, 6], [7, 27], [8, 15], [8, 16], [8, 26]],
-  1404: [[4, 17], [4, 18], [6, 24], [7, 15], [8, 4], [8, 5], [8, 15]],
-  1405: [[4, 6], [4, 7], [6, 13], [7, 4], [7, 23], [7, 24], [9, 3]],
-  default: [[4, 20], [4, 21], [6, 27], [7, 18], [8, 7], [8, 8], [8, 18]],
-};
-
-/** Map of "month-day" → holiday name for Jalali year jy. Fixed holidays win on clashes. */
-export function holidaysFor(jy) {
-  const map = new Map();
-  const islamic = ISLAMIC_DATES[jy] || ISLAMIC_DATES.default;
-  islamic.forEach(([m, d], i) => map.set(`${m}-${d}`, ISLAMIC_NAMES[i]));
-  FIXED.forEach(([m, d, name]) => map.set(`${m}-${d}`, name));
-  return map;
+function hijriFormatter() {
+  for (const calendar of ['islamic-umalqura', 'islamic-civil']) {
+    const fmt = new Intl.DateTimeFormat(`en-u-ca-${calendar}`, {
+      month: 'numeric', day: 'numeric', timeZone: 'UTC',
+    });
+    if (fmt.resolvedOptions().calendar === calendar) return fmt;
+  }
+  throw new Error('This browser has no Islamic calendar support.');
 }
 
-export function hasExactLunarDates(jy) {
-  return Boolean(ISLAMIC_DATES[jy]);
+let formatter;
+/** Hijri { month, day } for a YYYY-MM-DD Gregorian date. */
+export function hijriDate(gregorian) {
+  formatter ??= hijriFormatter();
+  const parts = formatter.formatToParts(new Date(`${gregorian}T00:00:00Z`));
+  const get = (type) => Number(parts.find((p) => p.type === type).value);
+  return { month: get('month'), day: get('day') };
+}
+
+const nextDay = (gregorian) => new Date(Date.parse(`${gregorian}T00:00:00Z`) + 86400000)
+  .toISOString().slice(0, 10);
+
+/** Map of "jalaliMonth-jalaliDay" → holiday name for Jalali year jy. */
+export function holidaysFor(jy) {
+  const map = new Map();
+  const add = (key, name) => map.set(key, map.has(key) ? `${map.get(key)}، ${name}` : name);
+
+  for (const [m, d, name] of SOLAR) add(`${m}-${d}`, name);
+
+  for (const day of yearDays(jy)) {
+    const key = `${day.jm}-${day.jd}`;
+    const h = hijriDate(day.gregorian);
+    for (const [m, d, name] of LUNAR) if (h.month === m && h.day === d) add(key, name);
+    if (h.month === 2 && h.day >= 29 && hijriDate(nextDay(day.gregorian)).month === 3) add(key, IMAM_REZA);
+  }
+  return map;
 }

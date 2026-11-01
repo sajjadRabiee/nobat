@@ -72,3 +72,30 @@ test('name parsing skips blanks and trims', () => {
   assert.deepEqual(namesFromRows([[' a '], [], [null], ['b', 'x'], ['']]), ['a', 'b']);
   assert.deepEqual(namesFromText(' a \n\n b \r\n'), ['a', 'b']);
 });
+
+import { holidaysFor } from '../assets/holidays.js';
+
+test('holidays: official solar days present, retired ones gone', () => {
+  const h = holidaysFor(1405);
+  for (const key of ['1-1', '1-4', '1-12', '1-13', '3-14', '3-15', '11-22', '12-29']) assert.ok(h.has(key), key);
+  for (const key of ['6-30', '7-8']) assert.ok(!h.has(key) || !/بهشتی|دفاع/.test(h.get(key)), key);
+});
+
+test('holidays: lunar days follow the Hijri calendar', () => {
+  const find = (jy, name) => [...holidaysFor(jy)].filter(([, v]) => v.includes(name)).map(([k]) => k);
+  // Umm al-Qura: 1 Shawwal 1446 = 2025-03-30 = 10 Farvardin 1404,
+  // and 1 Shawwal 1447 = 2026-03-20 = 29 Esfand 1404 (two Eids in one solar year).
+  assert.deepEqual(find(1404, 'عید فطر').sort(), ['1-10', '1-11', '12-29']);
+  // 10 Dhu al-Hijjah 1446 = 2025-06-06 = 16 Khordad 1404
+  assert.deepEqual(find(1404, 'عید قربان'), ['3-16']);
+  // 10 Muharram 1448 = 2026-06-25 = 4 Tir 1405
+  assert.deepEqual(find(1405, 'عاشورا'), ['4-4']);
+});
+
+test('holidays: every year has all 27 official holidays (some years twice for a lunar one)', () => {
+  for (let y = 1400; y <= 1410; y++) {
+    const names = [...holidaysFor(y).values()].join('، ').split('، ');
+    assert.ok(names.length >= 27 && names.length <= 29, `${y}: ${names.length}`);
+    assert.ok(names.includes('شهادت امام رضا (ع)'), `${y} Imam Reza`);
+  }
+});

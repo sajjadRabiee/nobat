@@ -37,7 +37,7 @@ node --test 'tests/*.test.mjs'
 ## Notes
 
 - Calendar math follows the jalaali-js algorithm and is tested day by day against the browser's built-in Persian calendar for 1380–1480.
-- Lunar (Islamic) holiday dates are approximate. Only 1403–1405 have year-specific dates; other years use a generic estimate. Check the output against the official calendar.
+- Lunar (Islamic) holiday dates are not reliable yet. The table was carried over from Excel Divider 2 and is off by weeks to months for most years. Check the holidays against the official calendar before using a roster.
 - Libraries are vendored in `assets/vendor`: [SheetJS](https://sheetjs.com) 0.18.5 (Apache-2.0) for reading and [ExcelJS](https://github.com/exceljs/exceljs) 4.4.0 (MIT) for writing.
 
 Rewritten from the PHP project *Excel Divider 2*.
